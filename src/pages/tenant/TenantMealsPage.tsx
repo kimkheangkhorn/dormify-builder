@@ -1,27 +1,27 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { MEAL_PLANS, MEAL_TOGGLES, TENANT_MEAL_HISTORY, DORMS } from "@/lib/mock-data";
-import { UtensilsCrossed, Clock, Info } from "lucide-react";
+import { Info } from "lucide-react";
 
 const TenantMealsPage = () => {
   const { user } = useAuth();
-  if (!user) return null;
-
   const plan = MEAL_PLANS[0];
-  const dorm = DORMS.find(d => d.id === user.dormId);
+  const dorm = DORMS.find(d => d.id === user?.dormId);
 
-  // Local state for toggles
   const [toggles, setToggles] = useState<Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }>>(() => {
     const map: Record<string, any> = {};
-    MEAL_TOGGLES.filter(t => t.tenantId === user.id).forEach(t => {
-      map[t.date] = { breakfast: t.breakfast, lunch: t.lunch, dinner: t.dinner };
-    });
-    // Fill missing days with all ON
+    if (user) {
+      MEAL_TOGGLES.filter(t => t.tenantId === user.id).forEach(t => {
+        map[t.date] = { breakfast: t.breakfast, lunch: t.lunch, dinner: t.dinner };
+      });
+    }
     plan?.days.forEach(d => {
       if (!map[d.date]) map[d.date] = { breakfast: true, lunch: true, dinner: true };
     });
     return map;
   });
+
+  if (!user) return null;
 
   const handleToggle = (date: string, meal: "breakfast" | "lunch" | "dinner") => {
     setToggles(prev => ({
@@ -40,7 +40,6 @@ const TenantMealsPage = () => {
         <p className="text-sm text-muted-foreground mt-1">Toggle meals and view your meal plan</p>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-card p-4 rounded-2xl shadow-card">
           <div className="text-xs text-muted-foreground font-medium">Total Meals</div>
@@ -61,13 +60,10 @@ const TenantMealsPage = () => {
         <p className="text-xs text-primary">Toggle meals ON/OFF for future days. Changes must be made before the cutoff time (10 PM the day before).</p>
       </div>
 
-      {/* Weekly Toggle Grid */}
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
         <div className="p-5 border-b border-border">
           <h3 className="text-sm font-semibold">Weekly Meal Plan & Toggles</h3>
         </div>
-
-        {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -102,8 +98,6 @@ const TenantMealsPage = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Mobile */}
         <div className="md:hidden divide-y divide-border">
           {plan?.days.map(day => {
             const t = toggles[day.date] || { breakfast: true, lunch: true, dinner: true };
@@ -121,7 +115,6 @@ const TenantMealsPage = () => {
         </div>
       </div>
 
-      {/* Meal History */}
       <div className="bg-card rounded-2xl shadow-card p-5">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Meal History</h3>
         <div className="space-y-2">
@@ -142,12 +135,7 @@ const TenantMealsPage = () => {
 
 const MealToggleBtn = ({ on, menu, onClick }: { on: boolean; menu: string; onClick: () => void }) => (
   <div className="space-y-1">
-    <button
-      onClick={onClick}
-      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
-        on ? "bg-success/10 text-success hover:bg-success/20" : "bg-warning/10 text-warning hover:bg-warning/20"
-      }`}
-    >
+    <button onClick={onClick} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${on ? "bg-success/10 text-success hover:bg-success/20" : "bg-warning/10 text-warning hover:bg-warning/20"}`}>
       {on ? "ON" : "OFF"}
     </button>
     <div className="text-[10px] text-muted-foreground">{menu}</div>
@@ -155,9 +143,7 @@ const MealToggleBtn = ({ on, menu, onClick }: { on: boolean; menu: string; onCli
 );
 
 const MealToggleMobile = ({ label, menu, on, onClick }: { label: string; menu: string; on: boolean; onClick: () => void }) => (
-  <button onClick={onClick} className={`p-2.5 rounded-xl text-center transition-colors ${
-    on ? "bg-success/10 border border-success/20" : "bg-warning/10 border border-warning/20"
-  }`}>
+  <button onClick={onClick} className={`p-2.5 rounded-xl text-center transition-colors ${on ? "bg-success/10 border border-success/20" : "bg-warning/10 border border-warning/20"}`}>
     <div className="text-[10px] font-medium text-muted-foreground">{label}</div>
     <div className={`text-xs font-bold mt-1 ${on ? "text-success" : "text-warning"}`}>{on ? "ON" : "OFF"}</div>
     <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{menu}</div>
